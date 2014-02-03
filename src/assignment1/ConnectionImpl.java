@@ -61,7 +61,9 @@ public class ConnectionImpl extends UnicastRemoteObject implements Connection {
 //		}
 	}
 	
-	
+	/**
+	 * Server specific code to be run
+	 */
 	private void server() {
 		try {
 			this.registry = LocateRegistry.createRegistry(PORT);
@@ -72,6 +74,11 @@ public class ConnectionImpl extends UnicastRemoteObject implements Connection {
 		System.out.println("System is ready");
 	}
 	
+	
+	
+	/**
+	 * Client specific code to be run
+	 */
 	private void client() {
 		try {
 			this.registry = LocateRegistry.getRegistry("localhost",PORT);
