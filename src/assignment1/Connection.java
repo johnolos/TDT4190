@@ -18,7 +18,7 @@ public interface Connection extends Remote {
 	/*
 	 * Function used to register a player's turn.
 	 */
-	public void registerTurn(int x, int y) throws RemoteException;
+	public boolean registerTurn(int x, int y, char playerMark) throws RemoteException;
 	
 	
 	/*
@@ -37,7 +37,7 @@ public interface Connection extends Remote {
 	 * 
 	 * Called by both client and server.
 	 */
-	public void hasWon() throws RemoteException;
+	public void hasWon(char playerMark) throws RemoteException;
 	
 	
 }

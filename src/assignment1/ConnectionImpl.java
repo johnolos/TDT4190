@@ -30,7 +30,7 @@ public class ConnectionImpl extends UnicastRemoteObject implements Connection {
 			otherPlayer.register(this);
 			// Initiate game-window
 			System.out.println("Starting game...");
-			this.game = new TicTacToe(this, this.server);
+			this.game = new TicTacToe(this,this.otherPlayer, this.server, 'O');
 		}
 	}
 	
@@ -69,12 +69,12 @@ public class ConnectionImpl extends UnicastRemoteObject implements Connection {
 		this.otherPlayer = player;
 		System.out.println("Player connected.");
 		System.out.println("Starting game...");
-		this.game = new TicTacToe(this, this.server);
+		this.game = new TicTacToe(this, this.otherPlayer, this.server, 'X');
 	}
 
 	@Override
-	public void registerTurn(int x, int y) throws RemoteException {
-		// TODO Auto-generated method stub
+	public boolean registerTurn(int x, int y, char playerMark) throws RemoteException {
+		return this.game.getBoardModel().setCell(x, y, playerMark);
 		
 	}
 
@@ -84,8 +84,8 @@ public class ConnectionImpl extends UnicastRemoteObject implements Connection {
 	}
 
 	@Override
-	public void hasWon() throws RemoteException {
-		// TODO Auto-generated method stub
-		
+	public void hasWon(char playerMark) throws RemoteException {
+		this.game.gameFinished();
+		this.game.setStatusMessage("Player " + playerMark + " won!");
 	}
 }
