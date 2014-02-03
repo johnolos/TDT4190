@@ -1,7 +1,5 @@
 package assignment1;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
 import java.rmi.*;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -17,6 +15,7 @@ public class ConnectionImpl extends UnicastRemoteObject implements Connection {
 	private Connection otherPlayer;
 	private static Registry registry;
 	private String url;
+	private TicTacToe game;
 
 	public ConnectionImpl(boolean server) throws RemoteException {
 		System.setSecurityManager(new RMISecurityManager());
@@ -64,5 +63,23 @@ public class ConnectionImpl extends UnicastRemoteObject implements Connection {
 	public void register(Connection player) {
 		this.otherPlayer = player;
 		System.out.println("Player connected.");
+	}
+
+	@Override
+	public void registerTurn(int x, int y) throws RemoteException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void nextPlayer() throws RemoteException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void hasWon() throws RemoteException {
+		// TODO Auto-generated method stub
+		
 	}
 }
