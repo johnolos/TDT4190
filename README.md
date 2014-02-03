@@ -19,3 +19,18 @@ git add "file"
 git commit -m "Commit message"
 git push origin master https://github.com/johnolos/TDT4190.git
 
+
+git init
+git add --all "folder"
+git add "file"
+git commit -m "Commit message, first commit, fixed bug"
+git push https://github.com/johnolos/TDT4190.git
+
+
+
+
+#Bruker 2
+git clone https://github.com/johnolos/TDT4190.git
+// Etter første gang
+git pull https://github.com/johnolos/TDT4190.git
+
