@@ -13,11 +13,13 @@ public class ConnectionImpl extends UnicastRemoteObject implements Connection {
 	private static final long serialVersionUID = 7639896393776979985L;
 	public static final int PORT = 3005 + 31*10;
 	private Connection otherPlayer;
+	private boolean server;
 	private static Registry registry;
 	private String url;
 	private TicTacToe game;
 
 	public ConnectionImpl(boolean server) throws RemoteException {
+		this.server = server;
 		System.setSecurityManager(new RMISecurityManager());
 		this.url = "rmi://" + "localhost" + ":" + PORT + "/ConnectionImpl";
 		
@@ -26,6 +28,9 @@ public class ConnectionImpl extends UnicastRemoteObject implements Connection {
 		} else {
 			client();
 			otherPlayer.register(this);
+			// Initiate game-window
+			System.out.println("Starting game...");
+			this.game = new TicTacToe(this, this.server);
 		}
 	}
 	
@@ -63,6 +68,8 @@ public class ConnectionImpl extends UnicastRemoteObject implements Connection {
 	public void register(Connection player) {
 		this.otherPlayer = player;
 		System.out.println("Player connected.");
+		System.out.println("Starting game...");
+		this.game = new TicTacToe(this, this.server);
 	}
 
 	@Override
@@ -73,8 +80,7 @@ public class ConnectionImpl extends UnicastRemoteObject implements Connection {
 
 	@Override
 	public void nextPlayer() throws RemoteException {
-		// TODO Auto-generated method stub
-		
+		this.game.changePlayer();
 	}
 
 	@Override

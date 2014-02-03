@@ -4,7 +4,9 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
+
 import java.awt.*;
+import java.rmi.RemoteException;
 
 /**
  * A Tic Tac Toe application. Currently this is a stand-alone application where
@@ -23,16 +25,45 @@ public class TicTacToe extends JFrame implements ListSelectionListener {
 	private final JLabel statusLabel = new JLabel();
 	private final char playerMarks[] = { 'X', 'O' };
 	private int currentPlayer = 0; // Player to set the next mark.
+	private ConnectionImpl connection;
+	private boolean myTurn;
 
 	public static void main(String args[]) {
 		new TicTacToe();
 	}
-
+	
 	public TicTacToe() {
 		super("TDT4190: Tic Tac Toe");
-
 		boardModel = new BoardModel(BOARD_SIZE);
 		board = new JTable(boardModel);
+		setup();
+	}
+
+	/**
+	 * New constructor when initiated as part of a ConnectionImpl
+	 * @param connection
+	 * @param server
+	 */
+	public TicTacToe(ConnectionImpl connection, boolean server) {
+		super("TicTacToe" + (server ? ": Server" : ": Client"));
+		this.connection = connection;
+		if(server) {
+			this.myTurn = true;
+			setStatusMessage("It is your turn.");
+		} else {
+			this.myTurn = false;
+			setStatusMessage("It is your opponent's turn.");
+		}
+		
+		boardModel = new BoardModel(BOARD_SIZE);
+		board = new JTable(boardModel);
+		setup();
+	}
+	
+	/**
+	 * Moved initial code from constructor to help-function.
+	 */
+	private void setup() {
 		board.setFont(board.getFont().deriveFont(25.0f));
 		board.setRowHeight(30);
 		board.setCellSelectionEnabled(true);
@@ -66,7 +97,7 @@ public class TicTacToe extends JFrame implements ListSelectionListener {
 		setLocation(centerX, centerY);
 		setVisible(true);
 	}
-
+	
 	void setStatusMessage(String status) {
 		statusLabel.setText(status);
 	}
@@ -80,14 +111,29 @@ public class TicTacToe extends JFrame implements ListSelectionListener {
 	 * the second player is received and added to the board of the first player.
 	 */
 	public void valueChanged(ListSelectionEvent e) {
+		if(!this.myTurn)
+			return;
 		if (e.getValueIsAdjusting())
 			return;
 		int x = board.getSelectedColumn();
 		int y = board.getSelectedRow();
 		if (x == -1 || y == -1 || !boardModel.isEmpty(x, y))
 			return;
+		try {
+			this.connection.registerTurn(x, y);
+			this.connection.nextPlayer();
+		} catch (RemoteException e1) {
+			e1.printStackTrace();
+		}
+		
 		if (boardModel.setCell(x, y, playerMarks[currentPlayer]))
 			setStatusMessage("Player " + playerMarks[currentPlayer] + " won!");
+		changePlayer();
 		currentPlayer = 1 - currentPlayer; // The next turn is by the other player.
+	}
+	
+	public void changePlayer() {
+		this.myTurn = !this.myTurn;
+		setStatusMessage("It is your " + (this.myTurn? "":"opponent's") + " turn.");
 	}
 }
