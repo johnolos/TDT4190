@@ -15,7 +15,7 @@ public class ConnectionImpl extends UnicastRemoteObject implements Connection {
 	private static final long serialVersionUID = 7639896393776979985L;
 	public static final int PORT = 3005 + 31*10;
 	private Connection otherPlayer;
-	private Registry registry;
+	private static Registry registry;
 	private String url;
 
 	public ConnectionImpl(boolean server) throws RemoteException {
@@ -26,39 +26,8 @@ public class ConnectionImpl extends UnicastRemoteObject implements Connection {
 			server();
 		} else {
 			client();
+			otherPlayer.register(this);
 		}
-		
-//		try {
-//			System.out.println("Looking up someone!");
-//			otherPlayer = (Connection) Naming.lookup(url);
-//		} catch (MalformedURLException e) {
-//			e.printStackTrace();
-//		} catch (NotBoundException e) {
-//			e.printStackTrace();
-//		} catch (RemoteException e) {
-//			e.printStackTrace();
-//		} finally {
-//			if (otherPlayer == null) {
-//				System.out
-//						.println("No players online! Please wait for someone to connect.");
-//				Connection inter = this;
-//				try {
-//					Naming.bind("url", inter);
-//				} catch (MalformedURLException | AlreadyBoundException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//				// ConnectionImpl stub =
-//				// (ConnectionImpl)UnicastRemoteObject.exportObject(this,3005 +
-//				// 31*10);
-//				// this.registry.rebind("ConnectionImpl", stub);
-//				catch (RemoteException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//			} else {
-//			}
-//		}
 	}
 	
 	/**
@@ -66,7 +35,7 @@ public class ConnectionImpl extends UnicastRemoteObject implements Connection {
 	 */
 	private void server() {
 		try {
-			this.registry = LocateRegistry.createRegistry(PORT);
+			ConnectionImpl.registry = LocateRegistry.createRegistry(PORT);
 			registry.rebind("ConnectionImpl", this);
 		} catch (RemoteException e) {
 			e.printStackTrace();
@@ -81,8 +50,8 @@ public class ConnectionImpl extends UnicastRemoteObject implements Connection {
 	 */
 	private void client() {
 		try {
-			this.registry = LocateRegistry.getRegistry("localhost",PORT);
-			this.otherPlayer = (Connection)this.registry.lookup("ConnectionImpl");
+			ConnectionImpl.registry = LocateRegistry.getRegistry("localhost",PORT);
+			this.otherPlayer = (Connection)ConnectionImpl.registry.lookup("ConnectionImpl");
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (NotBoundException e) {
@@ -94,5 +63,6 @@ public class ConnectionImpl extends UnicastRemoteObject implements Connection {
 	@Override
 	public void register(Connection player) {
 		this.otherPlayer = player;
+		System.out.println("Player connected.");
 	}
 }
