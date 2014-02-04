@@ -27,7 +27,7 @@ public class ConnectionImpl extends UnicastRemoteObject implements Connection {
 			server();
 		} else {
 			client();
-			otherPlayer.register(this);
+			otherPlayer.register((Connection)this);
 			// Initiate game-window
 			System.out.println("Starting game...");
 			this.game = new TicTacToe(this,this.otherPlayer, this.server, 'O');
@@ -40,7 +40,7 @@ public class ConnectionImpl extends UnicastRemoteObject implements Connection {
 	private void server() {
 		try {
 			ConnectionImpl.registry = LocateRegistry.createRegistry(PORT);
-			registry.rebind("ConnectionImpl", this);
+			registry.rebind("ConnectionImpl", (Connection)this);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
