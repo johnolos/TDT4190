@@ -12,6 +12,10 @@ import java.util.List;
  * Cell. Each Cell can contain a single char (e.g. X or O).
  */
 final class BoardModel implements TableModel {
+	
+	/** Comment from group:
+	 * Not altered at all.
+	 */
 
 	private final Cell boardCells[][];
 	private final List<TableModelListener> listeners = new ArrayList<TableModelListener>();

@@ -1,0 +1,3 @@
+grant codeBase "file:/home/exxon/workspace/TDT4190/bin/-" {
+    permission java.security.AllPermission;
+};

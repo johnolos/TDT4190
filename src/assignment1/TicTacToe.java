@@ -10,9 +10,9 @@ import java.rmi.RemoteException;
 
 /**
  * A Tic Tac Toe application. Currently this is a stand-alone application where
- * players take alternating turns using the same computer.
+ * players take alternating turns using java rmi connection.
  * <p/>
- * The task is to transform it to a networking application using RMI.
+ * Networking application using Java RMI.
  */
 public class TicTacToe extends JFrame implements ListSelectionListener {
 	/**
@@ -23,17 +23,15 @@ public class TicTacToe extends JFrame implements ListSelectionListener {
 	private final BoardModel boardModel;
 	private final JTable board;
 	private final JLabel statusLabel = new JLabel();
+	/** Altered fields or additions */
 	private final char playerMark;
-	private int currentPlayer = 0; // Player to set the next mark.
-	private ConnectionImpl client;
 	private Connection connection;
 	private boolean myTurn;
 	private boolean finished = false;
 
-	public static void main(String args[]) {
-		new TicTacToe();
-	}
-
+	/**
+	 * This is not possible to run. Original constructor
+	 */
 	public TicTacToe() {
 		super("TDT4190: Tic Tac Toe");
 		boardModel = new BoardModel(BOARD_SIZE);
@@ -45,13 +43,11 @@ public class TicTacToe extends JFrame implements ListSelectionListener {
 	/**
 	 * New constructor when initiated as part of a ConnectionImpl
 	 * 
-	 * @param client
-	 * @param server
+	 * @param client Connection to other player
+	 * @param server Server - Server host or client
 	 */
-	public TicTacToe(ConnectionImpl client, Connection connection,
-			boolean server, char playerMark) {
+	public TicTacToe(Connection connection, boolean server, char playerMark) {
 		super("TicTacToe" + (server ? ": Server" : ": Client"));
-		this.client = client;
 		this.connection = connection;
 		this.playerMark = playerMark;
 		if (server) {
@@ -105,19 +101,20 @@ public class TicTacToe extends JFrame implements ListSelectionListener {
 		setVisible(true);
 	}
 
+	/**
+	 * Set status message for the game
+	 * @param status Status Message
+	 */
 	void setStatusMessage(String status) {
 		statusLabel.setText(status);
 	}
 
+
 	/**
-	 * This has to be modified. Currently the application is stand-alone so both
-	 * players have to use the same computer.
-	 * <p/>
-	 * When completed, marks from the first player originates from a
-	 * ListSelectionEvent and is then sent to the second player. And marks from
-	 * the second player is received and added to the board of the first player.
+	 * Modified function from original.
 	 */
 	public void valueChanged(ListSelectionEvent e) {
+		// Checks whether or not it is my turn or if game is finished
 		if (!this.myTurn || this.finished)
 			return;
 		if (e.getValueIsAdjusting())
@@ -127,20 +124,23 @@ public class TicTacToe extends JFrame implements ListSelectionListener {
 		if (x == -1 || y == -1 || !boardModel.isEmpty(x, y))
 			return;
 		try {
+			// Returns true if a win has been detected locally
 			if (boardModel.setCell(x, y, playerMark)) {
-				System.out.println("Player " + playerMark + " won! Does the other computer agree?");
+				// Returns true if the other player agrees.
 				if (this.connection.registerTurn(x, y, this.playerMark)) {
-					System.out.println("Yes");
 					setStatusMessage("Player " + playerMark + " won!");
 					gameFinished();
 					this.connection.hasWon(this.playerMark);
 					return;
 				} else {
-					System.out.println("No");
+					// This shouldn't be used at all
 				}
 			}
+			// Register action to other player
 			this.connection.registerTurn(x, y, this.playerMark);
+			// Indicate remotely that this player is finished
 			this.connection.nextPlayer();
+			// Change player locally
 			changePlayer();
 		} catch (RemoteException e1) {
 			e1.printStackTrace();
@@ -151,16 +151,19 @@ public class TicTacToe extends JFrame implements ListSelectionListener {
 	 * Change player
 	 */
 	public void changePlayer() {
+		// Flip boolean value
 		this.myTurn = !this.myTurn;
+		// Change status message for game
 		setStatusMessage("It is your " + (this.myTurn ? "" : "opponent's")
 				+ " turn.");
-		currentPlayer = 1 - currentPlayer;
 	}
 
+	// Simple get-function
 	public BoardModel getBoardModel() {
 		return this.boardModel;
 	}
 
+	// Function to be called when game is finished
 	public void gameFinished() {
 		this.finished = true;
 	}
