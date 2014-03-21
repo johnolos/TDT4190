@@ -410,10 +410,36 @@ public class ServerImpl extends UnicastRemoteObject implements Server {
 	public boolean lockResource(int transactionId, int resourceId)
 			throws RemoteException {
 		Resource r = resources.get(resourceId);
-		boolean result = r.lock(transactionId);
-		if (gui != null)
-			gui.updateResourceTable(resources);
-		return result;
+		boolean result;
+		if (Globals.PROBING_ENABLED) {
+			result = r.lock(transactionId);
+			if(result == false) {
+				System.out.println("We have a problem. Edge Chasing run!");
+				runEdgeChasing(transactionId,resourceId);
+			}
+			if (gui != null)
+				gui.updateResourceTable(resources);
+			return result;
+		} else {
+			while (checkTimeout()) {
+				result = r.lock(transactionId);
+				if (gui != null)
+					gui.updateResourceTable(resources);
+				return result;
+			}
+		}
+		return false;
+	}
+
+	private void runEdgeChasing(int transactionId, int resourceId) {
+		ProbeMessage msg = new ProbeMessage(transactionId, resourceId);
+		System.out.println(msg.getDeadLockID());
+		try {
+			int i  = resourceId / 1000;
+			servers.get(i).receiveProbeMessage(msg);
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -617,6 +643,13 @@ public class ServerImpl extends UnicastRemoteObject implements Server {
 		return servers.get(id);
 	}
 
+	boolean checkTimeout() {
+		if (startupTime + System.currentTimeMillis() >= Globals.TIMEOUT_INTERVAL) {
+			return true;
+		}
+		return false;
+	}
+
 	/**
 	 * Starts up a new server.
 	 * 
@@ -639,5 +672,24 @@ public class ServerImpl extends UnicastRemoteObject implements Server {
 		} catch (RemoteException re) {
 			re.printStackTrace();
 		}
+	}
+
+	@Override
+	public void receiveProbeMessage(ProbeMessage msg) throws RemoteException {
+		int lockOwner = resources.get(msg.resourceId).getLockOwner();
+		System.out.println(msg.getDeadLockID());
+		msg.addPath(lockOwner);
+		if(msg.evaluateDeadLock()) {
+			int abortTransactionID = msg.getDeadLockID();
+			activeTransaction.abort();
+			return;
+		}
+		servers.get(msg.getDeadLockID()).receiveProbeMessage(msg);
+	}
+
+	@Override
+	public void abortTransaction(int transactionID) throws RemoteException {
+		// TODO Auto-generated method stub
+		
 	}
 }

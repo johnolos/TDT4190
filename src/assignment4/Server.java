@@ -68,4 +68,14 @@ public interface Server extends Remote {
 	 * Called by another server to ask this server to start its transactions.
 	 */
 	void startTransactions() throws RemoteException;
+	
+	/**
+	 * 
+	 */
+	void receiveProbeMessage(ProbeMessage msg) throws RemoteException;
+	
+	/**
+	 * 
+	 */
+	void abortTransaction(int transactionID) throws RemoteException;
 }

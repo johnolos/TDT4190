@@ -184,6 +184,8 @@ class Transaction {
 				lockedResources.add(resourceAccess);
 				waitingForResource = null;
 				return true;
+			} else {
+				abort();
 			}
 		} catch (RemoteException re) {
 			owner.lostContactWithServer(resourceAccess.serverId);
@@ -197,7 +199,7 @@ class Transaction {
 	/**
 	 * Aborts this transaction, releasing all the locks held by it.
 	 */
-	private synchronized void abort() {
+	public synchronized void abort() {
 		owner.println("Aborting transaction " + transactionId + '.',
 				transactionId);
 		releaseLocks();
@@ -253,6 +255,12 @@ class Transaction {
 				line = input.readLine();
 		}
 	}
+	
+	
+	public int getWaitingForResource() {
+		return this.waitingForResource;
+	}
+	
 
 	/**
 	 * Releases the lock to the specified resource being held by this

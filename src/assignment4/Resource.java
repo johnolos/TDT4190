@@ -36,7 +36,13 @@ class Resource {
 
 		while (lockOwner != NOT_LOCKED) {
 			try {
-				wait();
+				if (Globals.PROBING_ENABLED) {
+					wait();
+				} else {
+					wait(Globals.MAX_PROCESSING_TIME);
+				}
+				if(lockOwner != NOT_LOCKED)
+					return false;
 			} catch (InterruptedException ie) {
 			}
 		}
@@ -97,5 +103,9 @@ class Resource {
 	synchronized boolean isLockedByServer(int serverId) {
 		return lockOwner != NOT_LOCKED
 				&& ServerImpl.getTransactionOwner(lockOwner) == serverId;
+	}
+	
+	synchronized void receiveProbeMessage(ProbeMessage msg) {
+		
 	}
 }
