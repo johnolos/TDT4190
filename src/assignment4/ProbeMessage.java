@@ -1,12 +1,15 @@
 package assignment4;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.rmi.RemoteException;
+import java.util.LinkedList;
+import java.util.Queue;
 
-public class ProbeMessage implements Serializable{
-
-	int resourceId;
-	ArrayList<Integer> path;
+public class ProbeMessage extends Thread implements Serializable{
+	
+	private final ServerImpl server;
+	
+	private final Queue <Integer> waitingForResource = new LinkedList<Integer>();
 
 	/*
 	 * Whenever a process A is blocked for some resource, a probe message is
@@ -20,59 +23,19 @@ public class ProbeMessage implements Serializable{
 	 * loop of blocked processes, and a deadlock is detected.
 	 */
 
-	
-	// id-id-id-id
-	
-	ProbeMessage(int transactionId, int resourceId) {
-		this.path = new ArrayList<Integer>();
-		this.path.add(transactionId);
-		this.resourceId = resourceId;
-//		this.path.add(otherProcessId);
+	public ProbeMessage(ServerImpl server) {
+		this.server = server;
 	}
 	
-	public void addPath(int transactionId) {
-		this.path.add(transactionId);
-	}
 	
-	public boolean evaluateDeadLock() {
-		if(path.size() < 2) {
-			return false;
+	public void run() {
+		try {
+			server.receiveProbeMessage(waitingForResource);
+		} catch (RemoteException e) {
+			System.out.println(e.getStackTrace());
 		}
-		for(int i = 0; i <= path.size() - 2; i++) {
-			if(path.get(i).compareTo( path.get(path.size() - 1)) == 0) {
-				return true;
-			}
-		}
-		return false;
 	}
-	
-	public int getDeadLockID() {
-		return path.get(path.size() - 1);
-	}
-	
-//	
-//	public static void main(String args[]) {
-//		ProbeMessage test1 = new ProbeMessage(2001, 1002);
-//		test1.addPath(2002);
-//		test1.addPath(2001);
-//		
-//		ProbeMessage test2 = new ProbeMessage(2002, 2003);
-//		test2.addPath(2003);
-//		
-//		
-//		ProbeMessage test4 = new ProbeMessage(2002, 2003);
-//		test4.addPath(1001);
-//		test4.addPath(2002);
-//		test4.addPath(2003);
-//		
-//		
-//		
-//		
-//		
-//		System.out.println(test1.evaluateDeadLock());
-//		System.out.println(test2.evaluateDeadLock());
-//		System.out.println(test4.evaluateDeadLock());
-//		
-//	}
+
+
 
 }

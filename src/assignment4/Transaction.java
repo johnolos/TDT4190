@@ -179,6 +179,9 @@ class Transaction {
 				+ resourceAccess.resourceId + " at server "
 				+ resourceAccess.serverId, transactionId);
 		try {
+			if(Globals.PROBING_ENABLED) {
+				new ProbeMessage(owner).start();
+			}
 			if (resourceAccess.server.lockResource(transactionId,
 					resourceAccess.resourceId)) {
 				lockedResources.add(resourceAccess);
@@ -256,9 +259,8 @@ class Transaction {
 		}
 	}
 	
-	
-	public int getWaitingForResource() {
-		return this.waitingForResource;
+	public ResourceAccess getWaitingForResource() {
+		return waitingForResource;
 	}
 	
 
@@ -284,5 +286,9 @@ class Transaction {
 					+ " at server " + resource.serverId
 					+ " due to communication failure.", transactionId);
 		}
+	}
+
+	public int getId() {
+		return transactionId;
 	}
 }

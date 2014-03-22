@@ -409,37 +409,12 @@ public class ServerImpl extends UnicastRemoteObject implements Server {
 	 */
 	public boolean lockResource(int transactionId, int resourceId)
 			throws RemoteException {
-		Resource r = resources.get(resourceId);
-		boolean result;
-		if (Globals.PROBING_ENABLED) {
-			result = r.lock(transactionId);
-			if(result == false) {
-				System.out.println("We have a problem. Edge Chasing run!");
-				runEdgeChasing(transactionId,resourceId);
-			}
-			if (gui != null)
-				gui.updateResourceTable(resources);
-			return result;
-		} else {
-			while (checkTimeout()) {
-				result = r.lock(transactionId);
-				if (gui != null)
-					gui.updateResourceTable(resources);
-				return result;
-			}
-		}
-		return false;
-	}
-
-	private void runEdgeChasing(int transactionId, int resourceId) {
-		ProbeMessage msg = new ProbeMessage(transactionId, resourceId);
-		System.out.println(msg.getDeadLockID());
-		try {
-			int i  = resourceId / 1000;
-			servers.get(i).receiveProbeMessage(msg);
-		} catch (RemoteException e) {
-			e.printStackTrace();
-		}
+		Resource r = (Resource)resources.get(resourceId);
+		boolean result = r.lock(transactionId);
+		if(gui != null)
+			gui.updateResourceTable(resources);
+		return result;
+		
 	}
 
 	/**
@@ -643,13 +618,6 @@ public class ServerImpl extends UnicastRemoteObject implements Server {
 		return servers.get(id);
 	}
 
-	boolean checkTimeout() {
-		if (startupTime + System.currentTimeMillis() >= Globals.TIMEOUT_INTERVAL) {
-			return true;
-		}
-		return false;
-	}
-
 	/**
 	 * Starts up a new server.
 	 * 
@@ -674,22 +642,57 @@ public class ServerImpl extends UnicastRemoteObject implements Server {
 		}
 	}
 
-	@Override
-	public void receiveProbeMessage(ProbeMessage msg) throws RemoteException {
-		int lockOwner = resources.get(msg.resourceId).getLockOwner();
-		System.out.println(msg.getDeadLockID());
-		msg.addPath(lockOwner);
-		if(msg.evaluateDeadLock()) {
-			int abortTransactionID = msg.getDeadLockID();
-			activeTransaction.abort();
-			return;
+	/**
+	 * Try to end current transaction
+	 */
+	private void endCurrentTransaction() {
+		println("Trying to resolve deadlock " + activeTransaction.getId());
+		try {
+			activeTransaction.getWaitingForResource().server
+					.notifyResource(activeTransaction.getWaitingForResource().resourceId);
+		} catch (RemoteException e) {
+			e.printStackTrace();
 		}
-		servers.get(msg.getDeadLockID()).receiveProbeMessage(msg);
 	}
 
+	/**
+	 * This method is called to send probe messages between processes in the
+	 * distributed system. The method is invoked remotely. If a deadlock is
+	 * detected, the system will try to resolve it.
+	 */
 	@Override
-	public void abortTransaction(int transactionID) throws RemoteException {
-		// TODO Auto-generated method stub
-		
+	public void receiveProbeMessage(Queue<Integer> probe)
+			throws RemoteException {
+		if (activeTransaction != null) {
+			ResourceAccess waitingForResource = activeTransaction
+					.getWaitingForResource();
+			if (waitingForResource != null) {
+				if (probe.contains(activeTransaction.getId())) {
+					// Perhaps deadlock
+					probe.add(activeTransaction.getId());
+					println("Deadlock detected" + probe,
+							activeTransaction.getId());
+					println("Size of wait-for-graph: " + probe.size());
+					endCurrentTransaction();
+				} else {
+					println("Waiting for other transactions, forwarding probe message to them");
+					probe.add(activeTransaction.getId());
+					waitingForResource.server.receiveProbeMessage(probe);
+				}
+			}
+		}
 	}
+
+	/**
+	 * Notify that the given resource is available.
+	 */
+	@Override
+	public void notifyResource(int resourceID) throws RemoteException {
+		Resource resource = (Resource) resources.get(resourceID);
+		synchronized (resource) {
+			resource.notify();
+		}
+
+	}
+
 }

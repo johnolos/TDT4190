@@ -37,11 +37,15 @@ class Resource {
 		while (lockOwner != NOT_LOCKED) {
 			try {
 				if (Globals.PROBING_ENABLED) {
+					/*
+					 * Here we can potentially wait forever. Deadlocks are
+					 * resolved by sending probe messages.
+					 */
 					wait();
 				} else {
-					wait(Globals.MAX_PROCESSING_TIME);
+					wait(Globals.TIMEOUT_INTERVAL);
 				}
-				if(lockOwner != NOT_LOCKED)
+				if (lockOwner != NOT_LOCKED)
 					return false;
 			} catch (InterruptedException ie) {
 			}
@@ -104,8 +108,8 @@ class Resource {
 		return lockOwner != NOT_LOCKED
 				&& ServerImpl.getTransactionOwner(lockOwner) == serverId;
 	}
-	
+
 	synchronized void receiveProbeMessage(ProbeMessage msg) {
-		
+
 	}
 }

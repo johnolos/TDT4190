@@ -1,6 +1,7 @@
 package assignment4;
 
 import java.rmi.*;
+import java.util.Queue;
 
 /**
  * Remote interface specifying the functionality of a server in the distributed
@@ -72,10 +73,8 @@ public interface Server extends Remote {
 	/**
 	 * 
 	 */
-	void receiveProbeMessage(ProbeMessage msg) throws RemoteException;
+	void receiveProbeMessage(Queue<Integer> waitingForResource) throws RemoteException;
 	
-	/**
-	 * 
-	 */
-	void abortTransaction(int transactionID) throws RemoteException;
+	
+	void notifyResource(int resourceID) throws RemoteException;
 }
